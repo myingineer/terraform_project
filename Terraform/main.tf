@@ -33,3 +33,11 @@ module "alb" {
   aws_waf_arn = module.aws_waf.waf_arn
   vpc_id = module.vpc.vpc_id
 }
+
+# The Module for the RDS
+module "rds" {
+  source = "./modules/rds"
+  private_subnets_id = module.vpc.private_subnet_ids
+  db_sg = module.security_group.db_sg_id
+  db_password = var.db_password
+}

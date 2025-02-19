@@ -1,0 +1,93 @@
+name: Terraform CI CD Pipeline for Deploying Infrastructure
+run-name: ${{ github.actor }} has triggered the pipeline
+
+on:
+    push:
+        branches:
+            - main
+
+env: 
+    AWS_REGION: us-east-1
+    GITHUB_REPO_URL: https://github.com/myingineer/habit_tracker
+
+jobs:
+    deploy-and-test:
+        name: Deploy Infrastructure and Test then Destroy
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v2
+              with:
+                terraform_version: 1.10.5
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                aws-region: ${{ env.AWS_REGION }}
+
+            - name: Terraform Init
+              run: terraform init
+              working-directory: ./Terraform
+
+            - name: Terraform Plan
+              run: terraform plan
+              working-directory: ./Terraform
+
+            - name: Terraform Apply
+              run: terraform apply -auto-approve
+              env:
+                TF_VAR_db_password: ${{ secrets.DB_PASSWORD }} # Pass the DB password secret
+                TF_VAR_vpc_cidr: ${{ secrets.VPC_CIDR }}  # Pass the VPC CIDR secret
+                TF_VAR_public_subnet_cidrs: ${{ secrets.PUBLIC_SUBNET_CIDRS }}  # Pass the public subnet CIDRs secret
+                TF_VAR_private_subnet_cidrs: ${{ secrets.PRIVATE_SUBNET_CIDRS }} # Pass the private subnet CIDRs secret
+              working-directory: ./Terraform
+
+            - name: Wait for API to be Ready
+              run: sleep 300s
+
+            - name: Extract ALB DNS Name
+              working-directory: ./Terraform
+              run: echo "ALB_URL=$(terraform output -raw alb_dns_name)" >> $GITHUB_ENV
+
+            - name: Deploy Habit Tracker on EC2 (via AWS SSM)
+              run: |
+                aws ssm send-command \
+                  --region $AWS_REGION \
+                  --document-name "AWS-RunShellScript" \
+                  --targets "Key=tag:Name,Values=habit-tracker-ec2" \
+                  --parameters 'commands=[
+                    "sudo apt update -y",
+                    "sudo apt install -y python3-pip git",
+                    "git clone $GITHUB_REPO_URL /home/ubuntu/habit-tracker || (cd /home/ubuntu/habit-tracker && git pull)",
+                    "cd /home/ubuntu/habit-tracker",
+                    "pip3 install -r requirements.txt",
+                    "nohup python3 main.py > app.log 2>&1 &"
+                  ]' \
+                  --comment "Deploy habit tracker backend"
+
+            - name: Wait for API to be Ready
+              run: sleep 120
+
+            - name: Setup Python for Testing
+              uses: actions/setup-python@v4
+              with:
+                python-version: '3.11'
+
+            - name: Install Testing Dependencies
+              run: pip install pytest httpx
+
+            - name: Run API Tests
+              run: pytest tests/ --base-url=https://${{ env.ALB_URL }}
+
+            - name: Terraform Output
+              run: terraform output
+              working-directory: ./Terraform
+
+            - name: Terraform Destroy
+              run: terraform destroy -auto-approve
+              working-directory: ./Terraform
