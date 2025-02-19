@@ -15,20 +15,20 @@ resource "aws_db_subnet_group" "prod_db_subnet_group" {
 ## Set up the RDS
 resource "aws_db_instance" "prod_postgres" {
   engine               = "postgres"   # Specify the PostgreSQL engine
-  engine_version       = "13.3"       # Version of PostgreSQL
+  engine_version       = "11.22"       # PostgreSQL version
   multi_az             = true         # Enable multi-AZ deployment for standby
   identifier           = "habit-tracker-instance"  # Database identifier
   allocated_storage    = 10           # Storage size in GB
   storage_type         = "gp2"        # General-purpose SSD storage
-  instance_class       = "db.t2.micro" # Small instance type 
-  username             = "admin"      # Database admin username
+  instance_class       = "db.t3.micro" # Small instance type 
+  username             = "alex"      # Database admin username
   password             = var.db_password  # Database admin password
   db_subnet_group_name = aws_db_subnet_group.prod_db_subnet_group.name 
   vpc_security_group_ids = [ var.db_sg ] # Security group for the RDS instance
   backup_retention_period = 7         # Backup retention period in days
   publicly_accessible  = false        # Private subnets
   skip_final_snapshot  = true         # Skip snapshot on deletion
-  db_name              = "habit-tracker-database"          # Database name
+  db_name              = "habit_tracker_database"          # Database name
 
   tags = {
     Name = "prod_postgres_db"

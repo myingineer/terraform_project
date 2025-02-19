@@ -48,7 +48,7 @@ jobs:
               working-directory: ./Terraform
 
             - name: Wait for API to be Ready
-              run: sleep 300s
+              run: sleep 900s
 
             - name: Extract ALB DNS Name
               working-directory: ./Terraform
@@ -65,6 +65,16 @@ jobs:
                     "sudo apt install -y python3-pip git",
                     "git clone $GITHUB_REPO_URL /home/ubuntu/habit-tracker || (cd /home/ubuntu/habit-tracker && git pull)",
                     "cd /home/ubuntu/habit-tracker",
+                    "echo DB_URL=${{ secrets.DB_URL }} >> .env",  # Create .env file with DB_URL
+                    "echo DB_PORT=${{ secrets.DB_PORT }} >> .env",  # Create .env file with DB_PORT
+                    "echo DB_PASSWORD=${{ secrets.DB_PASSWORD }} >> .env",  # Create .env file with DB_PASSWORD
+                    "echo DB_USERNAME=${{ secrets.DB_USERNAME }} >> .env",  # Create .env file with DB_USERNAME
+                    "echo DB_NAME=${{ secrets.DB_NAME }} >> .env",  # Create .env file with DB_NAME
+                    "echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env",  # Create .env file with SECRET_KEY
+                    "echo ALGORITHM=${{ secrets.ALGORITHM }} >> .env",  # Create .env file with ALGORITHM
+                    "echo ACCESS_TOKEN_EXPIRE_MINUTES=${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }} >> .env",  # Create .env file with ACCESS_TOKEN_EXPIRE_MINUTES
+                    "echo EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }} >> .env",  # Create .env file with EMAIL_ADDRESS
+                    "echo EMAIL_APP_PASSWORD=${{ secrets.EMAIL_APP_PASSWORD }} >> .env",  # Create .env file with EMAIL_APP_PASSWORD
                     "pip3 install -r requirements.txt",
                     "nohup python3 main.py > app.log 2>&1 &"
                   ]' \
