@@ -43,6 +43,10 @@ jobs:
                 TF_VAR_private_subnet_cidrs: '["10.0.3.0/24", "10.0.4.0/24"]'  # Pass the private subnet CIDRs
               working-directory: ./
 
+            - name: Set up error handling for cleanup
+              run: |
+                trap 'echo "Error occurred or workflow canceled! Destroying all services..."; terraform destroy -auto-approve; exit 0' ERR
+
             - name: Wait for API to be Ready
               run: sleep 5s
 
@@ -75,6 +79,11 @@ jobs:
                     "nohup python3 main.py > app.log 2>&1 &"
                   ]' \
                   --comment "Deploy habit tracker backend"
+                if [[ $? -ne 0 ]]; then
+                  echo "Failed to clone repo or deploy the app! Destroying infrastructure.";
+                  terraform destroy -auto-approve;
+                  exit 1;
+                fi
 
             - name: Wait for API to be Ready
               run: sleep 10
@@ -94,6 +103,10 @@ jobs:
               run: terraform output
               working-directory: ./
 
-            - name: Terraform Destroy
+            - name: Terraform Destroy (Always run)
+              if: always()
               run: terraform destroy -auto-approve
               working-directory: ./
+
+            - name: Exit pipeline after destruction
+              run: exit 0
