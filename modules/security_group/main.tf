@@ -56,7 +56,7 @@ resource "aws_security_group" "ec2_sg" {
     from_port                = 22
     to_port                  = 22
     protocol                 = "tcp"
-    security_groups = [aws_security_group.alb_sg.id]  # Allow HTTPS from ALB only
+    security_groups = [aws_security_group.alb_sg.id]  # Allow SSH from ALB only
   }
 
   # Optional: Egress rule allowing all outbound traffic
@@ -69,5 +69,36 @@ resource "aws_security_group" "ec2_sg" {
 
   tags = {
     Name = "EC2 Security Group"
+  }
+}
+
+## Security group for RDS
+resource "aws_security_group" "prod_db_sg" {
+  name        = "prod_db_sg"
+  description = "Security group for PostgreSQL RDS instance"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    security_groups = [aws_security_group.ec2_sg.id]  # Allow EC2 instances to access RDS
+  }
+
+  ingress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    security_groups = [ aws_security_group.ec2_sg.id ]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "prod-db-sg"
   }
 }
