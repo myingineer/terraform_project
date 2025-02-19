@@ -34,10 +34,6 @@ jobs:
               run: terraform init
               working-directory: ./Terraform
 
-            - name: Terraform Plan
-              run: terraform plan
-              working-directory: ./Terraform
-
             - name: Terraform Apply
               run: terraform apply -auto-approve
               env:
