@@ -44,7 +44,7 @@ jobs:
               working-directory: ./
 
             - name: Wait for API to be Ready
-              run: sleep 900s
+              run: sleep 5s
 
             - name: Extract ALB DNS Name
               working-directory: ./
@@ -77,7 +77,7 @@ jobs:
                   --comment "Deploy habit tracker backend"
 
             - name: Wait for API to be Ready
-              run: sleep 120
+              run: sleep 10
 
             - name: Setup Python for Testing
               uses: actions/setup-python@v4
