@@ -16,7 +16,7 @@ resource "aws_db_subnet_group" "prod_db_subnet_group" {
 resource "aws_db_instance" "prod_postgres" {
   engine               = "postgres"   # Specify the PostgreSQL engine
   engine_version       = "11.22"       # PostgreSQL version
-  multi_az             = true         # Enable multi-AZ deployment for standby
+  multi_az             = false         # Enable multi-AZ deployment for standby
   identifier           = "habit-tracker-instance"  # Database identifier
   allocated_storage    = 10           # Storage size in GB
   storage_type         = "gp2"        # General-purpose SSD storage
@@ -29,6 +29,12 @@ resource "aws_db_instance" "prod_postgres" {
   publicly_accessible  = false        # Private subnets
   skip_final_snapshot  = true         # Skip snapshot on deletion
   db_name              = "habit_tracker_database"          # Database name
+
+  # RDS logs to export
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"] 
+
+  monitoring_interval = 60  # Enable Enhanced Monitoring (every 60s)
+  monitoring_role_arn = var.rds_cloudwatch_arn
 
   tags = {
     Name = "prod_postgres_db"

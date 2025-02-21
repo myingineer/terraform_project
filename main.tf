@@ -23,6 +23,7 @@ module "ec2" {
   ec2_sg_id = module.security_group.ec2_sg_id
   private_subnets_id = module.vpc.private_subnet_ids
   target_group_arn = module.alb.target_group_arn
+  iam_instance_profile = module.cloudwatch.cloudwatch_profile_name
 }
 
 # The Module for the ALB
@@ -40,4 +41,14 @@ module "rds" {
   private_subnets_id = module.vpc.private_subnet_ids
   db_sg = module.security_group.db_sg_id
   db_password = var.db_password
+  rds_cloudwatch_arn = module.iam.rds_cloudwatch_arn
+}
+
+module "iam" {
+  source = "./modules/iam"
+}
+
+module "cloudwatch" {
+  source = "./modules/cloudwatch"
+  cloudwatch_agent_role_name = module.iam.cloudwatch_agent
 }

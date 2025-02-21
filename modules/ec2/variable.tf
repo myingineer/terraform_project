@@ -12,3 +12,8 @@ variable "target_group_arn" {
   description = "value of target_group_arn for alb"
   type = string
 }
+
+variable "iam_instance_profile" {
+  description = "value of iam_instance_profile for ec2 instance"
+  type = string
+}

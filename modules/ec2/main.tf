@@ -5,9 +5,19 @@ resource "aws_launch_template" "prod_lt" {
   name_prefix   = "prod-lt"
   image_id      = "ami-04b4f1a9cf54c11d0" 
   instance_type = "t2.micro"
+  iam_instance_profile {
+    name = var.iam_instance_profile
+  }
   key_name      = "test_key"
 
   vpc_security_group_ids = [ var.ec2_sg_id ]
+
+  user_data = base64encode(<<-EOF
+              #!/bin/bash
+              sudo yum install -y amazon-cloudwatch-agent
+              sudo amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c ssm:AmazonCloudWatch-linux -s
+              EOF
+  )
 
   tag_specifications {
     resource_type = "instance"

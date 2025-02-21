@@ -13,3 +13,8 @@ variable "db_password" {
   type        = string
   sensitive   = true  # Mark as sensitive to avoid logging
 }
+
+variable "rds_cloudwatch_arn" {
+  description = "The ARN of the IAM role for RDS Cloudwatch logs"
+  type        = string
+}
